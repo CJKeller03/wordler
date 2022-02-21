@@ -4,6 +4,7 @@ from dataclasses import dataclass, field
 @dataclass
 class Node:
     value: str
+    isLeaf: bool = False
     subnodes: dict[Node] = field(default_factory = dict)
 
     def add(self, item):
@@ -15,6 +16,8 @@ class Node:
                 newNode = Node(prefix)
                 newNode.add(item)
                 self.subnodes[prefix] = newNode
+        else:
+            self.isLeaf = True
     
     def __str__(self, tabDepth = 0) -> str:
         return (
@@ -45,3 +48,4 @@ if __name__ == '__main__':
 
 
     print(len(top))
+    print(top)
