@@ -3,6 +3,7 @@ import functools
 from pprint import pprint
 import time
 import numpy as np
+from tree import Node
 
 def timer(func):
     @functools.wraps(func)
@@ -44,9 +45,50 @@ def patternMatch(word1, word2, pattern):
     minLen = min(len(mask), len(pattern))
     return np.equal(mask[:minLen], pattern[:minLen]).all()
 
+def weakPatternMatch(word1, word2, pattern):
+    mask = patternFromWords(word1, word2)
+    minLen = min(len(mask), len(pattern))
+    return not np.isin(2, np.abs(np.subtract(mask[:minLen], pattern[:minLen])))
+
 #@timer
 def allMatches(word1, pattern, wordlist):
     return filter(lambda x: patternMatch(word1, x, pattern), wordlist)
+
+@timer
+def allMatchesCount(word1, pattern, wordlist):
+    return sum([1 for _ in allMatches(word1, pattern, wordlist)])
+
+@timer
+def treeMatchCount(word1, pattern, node):
+    def iterateSubnodes(node):
+        matches = 0
+        for subnode in node.subnodes.values():
+            matches += getCount(subnode)
+        #print(matches, " matches after iterating")
+        return matches
+    
+    def getCount(node):
+        #print("counting ", node.value, " (", node.isLeaf, ")...")
+        matches = 0
+
+        if node.isLeaf:
+            if not patternMatch(word1, node.value, pattern):
+                #print("failed a")
+                return matches
+            matches += iterateSubnodes(node) + 1
+        
+        else:
+            if not weakPatternMatch(word1, node.value, pattern):
+                #print("failed b")
+                return matches
+            matches += iterateSubnodes(node)           
+
+
+        return matches
+    
+    return getCount(node)
+    
+
 
 def getWordPatternMatrix(wordlist):
     PATTERN_LENGTH = len(wordlist[0])
@@ -56,7 +98,16 @@ def getWordPatternMatrix(wordlist):
 if __name__ == '__main__':
     from wordlist import GUESSES
 
-    tmp = patternFromWords("", "belac")
+    tmp = patternFromWords("crane", "nails")
     print(tmp)
     
-    pprint([x for x in allMatches("", patternFromWords("", "zormesanyd"), GUESSES)])
+    #pprint([x for x in allMatches("", patternFromWords("", "zormesanyd"), GUESSES)])
+
+    top = Node("")
+    for word in GUESSES:
+        top.add(word)
+
+    print(allMatchesCount("crane", tmp, GUESSES))
+    print(treeMatchCount("crane", tmp, top))
+
+    #print(weakPatternMatch("zzz", "aaa", tmp))

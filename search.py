@@ -17,33 +17,36 @@ def prunedTreeSearch(wordlist, pattern):
 
     nodesSkipped = 0
 
-    def search(node, pattern, maxInformation = 0):
+    def search(node, pattern, maxInformation = 0, minMatches = TOTAL_WORDS):
         nonlocal nodesSkipped
         #print("searching node: ", node.value)
-        PERCENT_MATCH = sum([1 for _ in allMatches(node.value, pattern, wordlist)]) / TOTAL_WORDS
+        MATCHES = sum([1 for _ in allMatches(node.value, pattern, wordlist)])
+        PERCENT_MATCH = MATCHES / TOTAL_WORDS
         
         #print("cur matches: ", PERCENT_MATCH)
         curInformation = PERCENT_MATCH * safeLog2(PERCENT_MATCH)
         #print("cur info: ", curInformation)
 
-        if curInformation < maxInformation:
+        if curInformation < maxInformation and MATCHES < minMatches:
             nodesSkipped += len(node) - 1
-            return maxInformation, None
+            return maxInformation, None, minMatches
 
 
-        bestInformation = 0 if not node.isLeaf else curInformation
-        bestValue = None if not node.isLeaf else node.value
+        bestInformation = curInformation if node.isLeaf else 0
+        bestValue = node.value if node.isLeaf else None
+        bestMatches = MATCHES if node.isLeaf else TOTAL_WORDS
 
         for subnode in node.subnodes.values():
-            subnodeInformation, subnodeBestValue = search(subnode, pattern, bestInformation)
+            subnodeInformation, subnodeBestValue, subnodeBestMatches = search(subnode, pattern, bestInformation, bestMatches)
             if subnodeInformation > bestInformation:
                 bestInformation = subnodeInformation
                 bestValue = subnodeBestValue
+                bestMatches = subnodeBestMatches
 
         print("best info and node for ", node.value, " is ", bestInformation, ", ", bestValue, " -- skipped: ", nodesSkipped)  
-        return bestInformation, bestValue
+        return bestInformation, bestValue, bestMatches
     
-    print("skipped: ", nodesSkipped)
+
     return search(tree, pattern)
 
 
@@ -62,5 +65,6 @@ def exhaustiveSearch(wordlist, pattern):
 if __name__ == '__main__':
     pattern = patternFromWords("zzezz", "eaaaa")
     print(pattern)
-    print(sum([1 for _ in allMatches("b", pattern, GUESSES)]) / len(GUESSES))
+    #print(sum([1 for _ in allMatches("b", pattern, GUESSES)]) / len(GUESSES))
     #print(exhaustiveSearch(GUESSES, pattern))
+    print(prunedTreeSearch(GUESSES, pattern))

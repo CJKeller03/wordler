@@ -19,6 +19,9 @@ class Node:
         else:
             self.isLeaf = True
     
+    def leafCount(self):
+        return sum([n.leafCount() for n in self.subnodes.values()]) + (1 if self.isLeaf else 0)
+
     def __str__(self, tabDepth = 0) -> str:
         return (
             "\t" * tabDepth + 
