@@ -54,9 +54,14 @@ def weakPatternMatch(word1, word2, pattern):
 def allMatches(word1, pattern, wordlist):
     return filter(lambda x: patternMatch(word1, x, pattern), wordlist)
 
-@timer
+#@timer
 def allMatchesCount(word1, pattern, wordlist):
     return sum([1 for _ in allMatches(word1, pattern, wordlist)])
+    total = 0
+    for word2 in wordlist:
+        if patternMatch(word1, word2, pattern):
+            total += 1
+    return total
 
 @timer
 def treeMatchCount(word1, pattern, node):
@@ -108,6 +113,6 @@ if __name__ == '__main__':
         top.add(word)
 
     print(allMatchesCount("crane", tmp, GUESSES))
-    print(treeMatchCount("crane", tmp, top))
+    #print(treeMatchCount("crane", tmp, top))
 
     #print(weakPatternMatch("zzz", "aaa", tmp))

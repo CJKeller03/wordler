@@ -2,13 +2,14 @@ from platform import node
 from tree import Node
 from wordlist import GUESSES
 from pattern import *
+import pickle
 
 def safeLog2(x):
     if x == 0:
         return 0
     return np.log2(1/x)
 
-def prunedTreeSearch(wordlist, pattern):
+def prunedTreeSearch(wordlist, pattern, memo = {}):
     #optimalMatches = round(0.3679 / len(wordlist)) / len(wordlist)
     tree = Node("")
     TOTAL_WORDS = len(wordlist)
@@ -16,11 +17,18 @@ def prunedTreeSearch(wordlist, pattern):
         tree.add(word)
 
     nodesSkipped = 0
+    #WORDLIST_SET = set(wordlist)
+
+    def getMatches(value, pattern):
+        key = (value, str(pattern))
+        if key not in memo:
+            memo[key] = set(allMatches(value, pattern, wordlist))
+        return len(memo[key])
 
     def search(node, pattern, maxInformation = 0, minMatches = TOTAL_WORDS):
         nonlocal nodesSkipped
         #print("searching node: ", node.value)
-        MATCHES = sum([1 for _ in allMatches(node.value, pattern, wordlist)])
+        MATCHES = getMatches(node.value, pattern)
         PERCENT_MATCH = MATCHES / TOTAL_WORDS
         
         #print("cur matches: ", PERCENT_MATCH)
@@ -47,7 +55,7 @@ def prunedTreeSearch(wordlist, pattern):
         return bestInformation, bestValue, bestMatches
     
 
-    return search(tree, pattern)
+    return (search(tree, pattern)), memo
 
 
 def exhaustiveSearch(wordlist, pattern):
@@ -67,4 +75,10 @@ if __name__ == '__main__':
     print(pattern)
     #print(sum([1 for _ in allMatches("b", pattern, GUESSES)]) / len(GUESSES))
     #print(exhaustiveSearch(GUESSES, pattern))
-    print(prunedTreeSearch(GUESSES, pattern))
+    #res1, memo = prunedTreeSearch(GUESSES, pattern)
+    #print(res1)
+    #with open('memo.pkl', 'wb') as handle:
+    #    pickle.dump(memo, handle, protocol=pickle.HIGHEST_PROTOCOL)
+    with open("memo.pkl", "rb") as handle:
+        memo = pickle.load(handle)
+    print(prunedTreeSearch(GUESSES, pattern, memo))
